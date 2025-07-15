@@ -4,13 +4,14 @@ import { updateProfile } from "firebase/auth";
 import { auth } from "../utils/firebase";
 import { addUser } from "../utils/userSlice";
 import Header from "./Header";
+import MovieCard from "./movieCard";
 
 const UserProfile = () => {
   const user = useSelector((store) => store.user);
   const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    displayName: user?.displayname || "",
+    displayName: user?.displayName || "",
     email: user?.email || "",
   });
   const [watchHistory, setWatchHistory] = useState([]);
@@ -31,14 +32,14 @@ const UserProfile = () => {
       await updateProfile(auth.currentUser, {
         displayName: formData.displayName,
       });
-      
+
       dispatch(addUser({
         uid: user.uid,
         email: user.email,
         displayname: formData.displayName,
         photoURL: user.photoURL,
       }));
-      
+
       setIsEditing(false);
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -60,7 +61,7 @@ const UserProfile = () => {
   return (
     <div className="min-h-screen bg-black text-white">
       <Header />
-      
+
       <div className="pt-24 px-4 sm:px-6 md:px-8 lg:px-12 max-w-6xl mx-auto">
         {/* Profile Header */}
         <div className="bg-gradient-to-r from-red-900/20 to-black/50 rounded-2xl p-8 mb-8 backdrop-blur-sm border border-white/10 fade-in relative overflow-hidden">
@@ -75,7 +76,7 @@ const UserProfile = () => {
               <rect width="100" height="100" fill="url(#grid)" />
             </svg>
           </div>
-          
+
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative group">
               <img
@@ -90,7 +91,7 @@ const UserProfile = () => {
                 </svg>
               </div>
             </div>
-            
+
             <div className="flex-1 text-center md:text-left relative z-10">
               {isEditing ? (
                 <div className="space-y-4">
@@ -227,14 +228,25 @@ const UserProfile = () => {
             )}
           </div>
           {favorites.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {favorites.slice(0, 6).map((movie, index) => (
-                <div key={index} className="bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors">
-                  <div className="aspect-[2/3] bg-gray-700 rounded-lg mb-2 flex items-center justify-center">
-                    <span className="text-xs text-gray-400">Poster</span>
-                  </div>
-                  <h4 className="text-sm font-medium truncate">{movie.title}</h4>
-                </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+              {favorites.map((movie, index) => (
+                // <div key={index} className="bg-white/5 rounded-lg p-3 hover:bg-white/10 transition-colors">
+                //   <div className="aspect-[2/3] bg-gray-700 rounded-lg mb-2 flex items-center justify-center">
+                //     <span className="text-xs text-gray-400">Poster</span>
+                //   </div>
+                //   <h4 className="text-sm font-medium truncate">{movie.title}</h4>
+                // </div>
+                // Replace the above div with MovieCard
+                // <div key={movie.id || index} className="p-2">
+                <MovieCard
+                  key={movie.id || index} // Use movie.id for better keying
+                  posterPath={movie.poster_path}
+                  title={movie.title}
+                  movieId={movie.id}
+                  rating={movie.vote_average} // Ensure vote_average is available from stored data
+                  year={movie.release_date ? new Date(movie.release_date).getFullYear() : undefined} // Extract year
+                  
+                />
               ))}
             </div>
           ) : (

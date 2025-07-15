@@ -10,12 +10,14 @@ import { auth } from "../utils/firebase";
 import { useDispatch } from "react-redux";
 import { addUser } from "../utils/userSlice";
 import { BG_URL, USER_AVATAR } from "../utils/constants";
+import { useNavigate } from "react-router-dom"; // <--- Import useNavigate
 
 const Login = () => {
   const [isSignInForm, setIsSignInForm] = useState(true);
   const [errorMassage, setErrorMassage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate(); // <--- Initialize useNavigate
 
   const email = useRef(null);
   const password = useRef(null);
@@ -24,6 +26,7 @@ const Login = () => {
   const handleButtonClick = async () => {
     setIsLoading(true);
     // validation the form data
+    console.log("Button clicked!");
     const message = checkValideData(
       email.current.value,
       password.current.value
@@ -34,7 +37,7 @@ const Login = () => {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       if (!isSignInForm) {
         // sign up logic
@@ -43,32 +46,56 @@ const Login = () => {
           email.current.value,
           password.current.value
         );
-        const user = userCredential.user;
-        await updateProfile(user, {
+        const user = userCredential.user; // Get user object from credential
+
+        await updateProfile(user, { // Use the user object from userCredential
           displayName: name.current.value,
-          photoURL: USER_AVATAR,
+          photoURL: USER_AVATAR, // Still using default avatar here, will be updated by profile upload
         });
-        const { uid, email: userEmail, displayname, photoURL } = auth.currentUser;
+
+        // Use the updated user object directly from the updateProfile result or the userCredential
+        // Firebase automatically updates auth.currentUser after updateProfile,
+        // but using the 'user' object from userCredential is often more direct.
+        // For Redux, ensure you get the latest state of the user.
+        // The onAuthStateChanged listener in Header.js will also pick this up,
+        // but dispatching here ensures immediate Redux update.
         dispatch(
           addUser({
-            uid: uid,
-            email: userEmail,
-            displayname: displayname,
-            photoURL: photoURL,
+            uid: user.uid,
+            email: user.email,
+            displayname: user.displayName, // Use user.displayName from the updated user object
+            photoURL: user.photoURL, // Use user.photoURL from the updated user object
           })
         );
+        console.log("Sign Up Success:", user);
+        navigate("/browse"); // <--- Navigate after successful sign-up
+
       } else {
         // sign In logic
-        await signInWithEmailAndPassword(
+        const userCredential = await signInWithEmailAndPassword( // <--- Capture userCredential
           auth,
           email.current.value,
           password.current.value
         );
+        const user = userCredential.user; // Get user object from credential
+
+        // Dispatch user to Redux store after successful sign-in
+        dispatch(
+          addUser({
+            uid: user.uid,
+            email: user.email,
+            displayname: user.displayName,
+            photoURL: user.photoURL,
+          })
+        );
+        console.log("Sign In Success:", user);
+        navigate("/browse"); // <--- Navigate after successful sign-in
       }
     } catch (error) {
       const errorCode = error.code;
       const errorMessage = error.message;
-      setErrorMassage(errorCode + " - " + errorMessage);
+      setErrorMassage(errorCode + " - " + errorMessage); // This should now display errors
+      console.error("Firebase Auth Error:", error); // <--- Log the full error object for debugging
     } finally {
       setIsLoading(false);
     }
@@ -82,25 +109,25 @@ const Login = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       <Header />
-      
+
       {/* Background with overlay */}
       <div className="absolute inset-0 scale-in">
-        <img 
-          className="w-full h-full object-cover scale-105" 
-          src={BG_URL} 
-          alt="background" 
+        <img
+          className="w-full h-full object-cover scale-105"
+          src={BG_URL}
+          alt="background"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black/70 to-transparent"></div>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60"></div>
       </div>
-      
+
       {/* Floating particles effect */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-red-500 rounded-full opacity-60 float"></div>
         <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-white rounded-full opacity-40 float" style={{animationDelay: '1s'}}></div>
         <div className="absolute bottom-1/4 left-1/3 w-1.5 h-1.5 bg-red-400 rounded-full opacity-50 float" style={{animationDelay: '2s'}}></div>
       </div>
-      
+
       <div className="relative z-10 flex items-center justify-center min-h-screen px-4 py-20">
         <div className="w-full max-w-sm sm:max-w-md md:max-w-lg scale-in">
           <form
@@ -115,7 +142,7 @@ const Login = () => {
                 {isSignInForm ? "Sign in to continue watching" : "Create your account to get started"}
               </p>
             </div>
-            
+
             <div className="space-y-4">
               {!isSignInForm && (
                 <div className="fade-in" style={{animationDelay: '0.2s'}}>
@@ -127,7 +154,7 @@ const Login = () => {
                   />
                 </div>
               )}
-              
+
               <div className="fade-in" style={{animationDelay: '0.4s'}}>
                 <input
                   ref={email}
@@ -168,11 +195,11 @@ const Login = () => {
                 isSignInForm ? "Sign In" : "Sign Up"
               )}
             </button>
-            
+
             <div className="mt-6 text-center fade-in" style={{animationDelay: '1s'}}>
               <p className="text-gray-300 text-sm sm:text-base">
                 {isSignInForm ? "New to Netflix? " : "Already have an account? "}
-                <button 
+                <button
                   onClick={toggleSignInForm}
                   className="text-red-400 hover:text-red-300 font-semibold hover:underline transition-all duration-300 hover:scale-105"
                 >

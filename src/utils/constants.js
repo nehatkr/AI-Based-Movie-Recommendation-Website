@@ -33,8 +33,22 @@ export const checkTMDBKey = () => {
 };
 
 // Helper function to build TMDB URLs
+// export const buildTMDBUrl = (endpoint) => {
+//   return `https://api.themoviedb.org/3${endpoint}`;
+// };
+
 export const buildTMDBUrl = (endpoint) => {
-  return `https://api.themoviedb.org/3${endpoint}`;
+  const apiKey = process.env.REACT_APP_TMDB_API_KEY; // Get your V3 key
+
+  // Basic check, though your checkTMDBKey function is good too
+  if (!apiKey) {
+      console.error("TMDB API Key (V3) is not defined in environment variables!");
+      return `https://api.themoviedb.org/3${endpoint}`;
+  }
+
+  const url = new URL(`https://api.themoviedb.org/3${endpoint}`);
+  url.searchParams.append('api_key', apiKey); // <-- This appends '?api_key=YOUR_KEY'
+  return url.toString();
 };
 
 export const IMG_CDN_URL = "https://image.tmdb.org/t/p/w500";

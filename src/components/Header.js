@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { addUser, removeUser } from "../utils/userSlice";
-import { LOGO, SUPPORTED_LANGUAGES } from "../utils/constants";
+import { LOGO, SUPPORTED_LANGUAGES, USER_AVATAR } from "../utils/constants";
 import { toggleGptSearchView } from "../utils/gptSlice";
 import { changeLanguage } from "../utils/configSlice";
 import { useState } from "react";
@@ -27,26 +27,78 @@ const Header = () => {
       });
   };
 
+  // useEffect(() => {
+  //   const unsubscribe = onAuthStateChanged(auth, (user) => {
+  //     if (user) {
+  //       const { uid, email, displayname, photoURL } = user;
+  //       dispatch(
+  //         addUser({
+  //           uid: uid,
+  //           email: email,
+  //           displayname: displayname,
+  //           photoURL: photoURL,
+  //         })
+  //       );
+  //       navigate("/browse");
+  //     } else {
+  //       dispatch(removeUser());
+  //       navigate("/login");
+  //     }
+  //   });
+  //   return () => unsubscribe();
+  // }, [dispatch, navigate]);
+
+// useEffect(() => {
+//     const unsubscribe = onAuthStateChanged(auth, (user) => {
+//         if (user) {
+//             const { uid, email, displayname, photoURL } = user;
+//             dispatch(
+//                 addUser({
+//                     uid: uid,
+//                     email: email,
+//                     displayname: displayname,
+//                     photoURL: photoURL,
+//                 })
+//             );
+//             // REMOVE THIS LINE: navigate("/browse");
+//         } else {
+//             dispatch(removeUser());
+//             navigate("/login"); // Keep this for logout to login page redirect
+//         }
+//     });
+//     return () => unsubscribe();
+// }, [dispatch, navigate]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        const { uid, email, displayname, photoURL } = user;
+        // User is signed in (or was signed in on page load)
+        const { uid, email, displayName, photoURL } = user; // Firebase user object uses 'displayName'
         dispatch(
           addUser({
             uid: uid,
             email: email,
-            displayname: displayname,
-            photoURL: photoURL,
+            displayName: displayName, // Use displayName from Firebase user object
+            photoURL: photoURL || USER_AVATAR, // Use actual photoURL or fallback to default
           })
         );
-        navigate("/browse");
+        // Navigate to /browse if the user is authenticated.
+        // This is a common pattern, but be mindful if you have specific
+        // routing needs (e.g., redirecting to a previously visited page).
+        if (window.location.pathname === "/" || window.location.pathname === "/login") {
+            navigate("/browse");
+        }
       } else {
-        dispatch(removeUser());
+        // User is signed out
+        dispatch(removeUser()); // Clear user data from Redux
+        // Navigate to the login page if no user is authenticated
         navigate("/login");
       }
     });
+
+    // Unsubscribe from the listener when the component unmounts to prevent memory leaks
     return () => unsubscribe();
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate]); // Dependencies: dispatch and navigate to avoid lint warnings
 
   const handleGptSearchClick = () => {
     dispatch(toggleGptSearchView());
@@ -202,6 +254,7 @@ const Header = () => {
                         handleSignOut();
                         setShowUserMenu(false);
                       }}
+                      
                       className="w-full text-left px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all duration-300 flex items-center gap-3 group hover:scale-105"
                     >
                       <div className="text-red-400 group-hover:text-red-300 transition-colors duration-300">
