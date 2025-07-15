@@ -378,8 +378,7 @@ input:focus, button:focus, select:focus {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(45deg, #ff1e2d, #d40813);
 }
-
-/* Ensure smooth scrolling for movie containers */
+  
 .movie-scroll-container {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
@@ -396,6 +395,7 @@ input:focus, button:focus, select:focus {
     scroll-snap-align: start;
   }
 }
+
 /* Enhanced fade in animation */
 @keyframes fadeIn {
   from { 
